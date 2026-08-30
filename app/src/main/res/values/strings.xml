@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Siri Autonomous Assistant</string>
+    <string name="accessibility_service_description">Autonomous Voice Assistant accessibility service used to inspect and interact with the device UI to perform tasks on your request.</string>
+</resources>
