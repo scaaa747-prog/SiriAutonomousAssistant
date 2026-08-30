@@ -17,9 +17,6 @@
     @com.google.gson.annotations.SerializedName <fields>;
 }
 
-# Keep Accessibility Service & System Models
--keep class com.assistant.ai.accessibility.** { *; }
--keep class com.assistant.ai.agent.** { *; }
--keep class com.assistant.ai.core.** { *; }
--keep class com.assistant.ai.data.** { *; }
--keep class com.assistant.ai.model.** { *; }
+# Keep all Assistant App Classes
+-keep class com.assistant.ai.** { *; }
+-keepclassmembers class com.assistant.ai.** { *; }

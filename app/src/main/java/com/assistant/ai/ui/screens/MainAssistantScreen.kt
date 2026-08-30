@@ -16,13 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.MicOff
-import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.FloatingActionButton
@@ -33,13 +27,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.assistant.ai.R
 import com.assistant.ai.agent.AgentState
 import com.assistant.ai.stt.SttState
 import com.assistant.ai.ui.components.AssistantOrb
@@ -211,7 +205,7 @@ fun MainAssistantScreen(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Stop button (visible when busy)
+                    // Stop button (visible when busy or listening)
                     if (isBusy || isListening) {
                         FloatingActionButton(
                             onClick = onStopClick,
@@ -220,7 +214,11 @@ fun MainAssistantScreen(
                             shape = CircleShape,
                             modifier = Modifier.size(56.dp)
                         ) {
-                            Icon(Icons.Default.Stop, contentDescription = "Cancel")
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_stop),
+                                contentDescription = "Cancel",
+                                modifier = Modifier.size(28.dp)
+                            )
                         }
                     }
 
@@ -233,7 +231,7 @@ fun MainAssistantScreen(
                         modifier = Modifier.size(72.dp)
                     ) {
                         Icon(
-                            imageVector = if (isListening) Icons.Default.Mic else Icons.Default.MicOff,
+                            painter = if (isListening) painterResource(id = R.drawable.ic_mic) else painterResource(id = R.drawable.ic_mic_off),
                             contentDescription = "Voice Input",
                             modifier = Modifier.size(32.dp)
                         )
