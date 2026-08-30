@@ -153,6 +153,10 @@ class AssistantViewModel(application: Application) : AndroidViewModel(applicatio
         settingsRepository.setWakeWordEnabled(enabled)
     }
 
+    fun setContinuousListeningEnabled(enabled: Boolean) {
+        settingsRepository.setContinuousListeningEnabled(enabled)
+    }
+
     override fun onCleared() {
         super.onCleared()
         voiceStateManager.cleanup()

@@ -11,7 +11,8 @@ data class SettingsState(
     val voiceLanguage: VoiceLanguage = VoiceLanguage.ENGLISH_US,
     val lowEndDeviceOptimization: Boolean = true,
     val confirmSensitiveActions: Boolean = true,
-    val wakeWordEnabled: Boolean = false
+    val wakeWordEnabled: Boolean = false,
+    val continuousListeningEnabled: Boolean = true
 )
 
 class SettingsRepository(context: Context) {
@@ -26,12 +27,14 @@ class SettingsRepository(context: Context) {
         val lowEnd = prefs.getBoolean(KEY_LOW_END_OPTIMIZATION, true)
         val confirm = prefs.getBoolean(KEY_CONFIRM_SENSITIVE, true)
         val wakeWord = prefs.getBoolean(KEY_WAKE_WORD, false)
+        val continuous = prefs.getBoolean(KEY_CONTINUOUS_LISTENING, true)
 
         return SettingsState(
             voiceLanguage = VoiceLanguage.fromCode(langCode),
             lowEndDeviceOptimization = lowEnd,
             confirmSensitiveActions = confirm,
-            wakeWordEnabled = wakeWord
+            wakeWordEnabled = wakeWord,
+            continuousListeningEnabled = continuous
         )
     }
 
@@ -55,11 +58,17 @@ class SettingsRepository(context: Context) {
         _settingsState.value = _settingsState.value.copy(wakeWordEnabled = enabled)
     }
 
+    fun setContinuousListeningEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_CONTINUOUS_LISTENING, enabled).apply()
+        _settingsState.value = _settingsState.value.copy(continuousListeningEnabled = enabled)
+    }
+
     companion object {
         private const val PREF_NAME = "assistant_settings"
         private const val KEY_VOICE_LANGUAGE = "voice_language"
         private const val KEY_LOW_END_OPTIMIZATION = "low_end_optimization"
         private const val KEY_CONFIRM_SENSITIVE = "confirm_sensitive"
         private const val KEY_WAKE_WORD = "wake_word_enabled"
+        private const val KEY_CONTINUOUS_LISTENING = "continuous_listening_enabled"
     }
 }

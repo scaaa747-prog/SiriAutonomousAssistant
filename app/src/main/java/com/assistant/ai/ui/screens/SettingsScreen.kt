@@ -55,6 +55,7 @@ fun SettingsScreen(
     onLowEndOptimizationToggled: (Boolean) -> Unit,
     onConfirmSensitiveToggled: (Boolean) -> Unit,
     onWakeWordToggled: (Boolean) -> Unit,
+    onContinuousListeningToggled: (Boolean) -> Unit,
     onOpenAccessibilitySettings: () -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -195,6 +196,36 @@ fun SettingsScreen(
                     Switch(
                         checked = settingsState.confirmSensitiveActions,
                         onCheckedChange = onConfirmSensitiveToggled
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Continuous Listening Mode
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.Mic, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Continuous Listening Mode", fontWeight = FontWeight.SemiBold)
+                        Text(
+                            "Keeps listening continuously after speaking responses without closing the mic.",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = settingsState.continuousListeningEnabled,
+                        onCheckedChange = onContinuousListeningToggled
                     )
                 }
             }

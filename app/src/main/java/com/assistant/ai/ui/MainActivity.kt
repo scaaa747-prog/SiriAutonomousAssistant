@@ -122,6 +122,7 @@ fun AssistantApp(
                 onLowEndOptimizationToggled = viewModel::setLowEndOptimization,
                 onConfirmSensitiveToggled = viewModel::setConfirmSensitiveActions,
                 onWakeWordToggled = viewModel::setWakeWordEnabled,
+                onContinuousListeningToggled = viewModel::setContinuousListeningEnabled,
                 onOpenAccessibilitySettings = onOpenAccessibilitySettings,
                 onBackClick = {
                     navController.popBackStack()

@@ -11,6 +11,7 @@ import com.assistant.ai.tts.TtsState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,10 +35,12 @@ class VoiceStateManager(
     val spokenText: StateFlow<String> = _spokenText.asStateFlow()
 
     private var sttObserveJob: Job? = null
+    private var ttsObserveJob: Job? = null
 
     init {
         observeSettings()
         observeSttState()
+        observeTtsState()
     }
 
     private fun observeSettings() {
@@ -66,6 +69,21 @@ class VoiceStateManager(
                         Log.w(TAG, "STT Error: ${state.message}")
                     }
                     else -> {}
+                }
+            }
+        }
+    }
+
+    private fun observeTtsState() {
+        ttsObserveJob?.cancel()
+        ttsObserveJob = scope.launch {
+            ttsEngine.state.collectLatest { state ->
+                if (state is TtsState.Idle && settingsRepository.settingsState.value.continuousListeningEnabled) {
+                    // Continuous Listening Loop: Auto-restart microphone when TTS finishes speaking
+                    delay(600)
+                    if (agentState.value is AgentState.Speaking) {
+                        startListening()
+                    }
                 }
             }
         }
