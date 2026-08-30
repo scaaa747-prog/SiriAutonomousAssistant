@@ -8,7 +8,7 @@ class ToolRegistry {
 
     fun registerTool(tool: AgentTool) {
         tools[tool.name.lowercase()] = tool
-        Log.d(TAG, "Registered tool: ${tool.name}")
+        try { Log.d(TAG, "Registered tool: ${tool.name}") } catch (_: Throwable) {}
     }
 
     fun getTool(name: String): AgentTool? {

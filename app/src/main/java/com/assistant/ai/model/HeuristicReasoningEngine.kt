@@ -19,7 +19,7 @@ class HeuristicReasoningEngine : LocalReasoningEngine {
         val query = context.userQuery.lowercase().trim()
         val screen = context.screenState
 
-        Log.d(TAG, "Evaluating query: '$query' (Current app: ${screen?.packageName})")
+        try { Log.d(TAG, "Evaluating query: '$query' (Current app: ${screen?.packageName})") } catch (_: Throwable) {}
 
         // 1. Direct System Commands (Deterministic Fast-Path)
         if (query.contains("battery")) {
