@@ -52,7 +52,9 @@ import com.assistant.ai.ui.components.TopGreetingHeader
 fun MainAssistantScreen(
     agentState: AgentState,
     sttState: SttState,
+    isListening: Boolean,
     spokenText: String,
+    lastResponse: String,
     rmsAmplitude: Float,
     batteryLevel: Int,
     isAccessibilityEnabled: Boolean,
@@ -64,6 +66,8 @@ fun MainAssistantScreen(
     onCancelAction: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val isBusy = agentState is AgentState.Thinking || agentState is AgentState.Acting
+
     Surface(
         modifier = modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -114,14 +118,14 @@ fun MainAssistantScreen(
 
                     Spacer(modifier = Modifier.height(32.dp))
 
-                    val statusHeadline = when (agentState) {
-                        is AgentState.Idle -> "How can I help?"
-                        is AgentState.Listening -> "Listening..."
-                        is AgentState.Thinking -> "Thinking..."
-                        is AgentState.Acting -> "Autonomous Execution"
-                        is AgentState.Speaking -> "Responding..."
-                        is AgentState.NeedsConfirmation -> "Action Required"
-                        is AgentState.Error -> "Notice"
+                    val statusHeadline = when {
+                        isListening -> "Listening..."
+                        agentState is AgentState.Thinking -> "Thinking..."
+                        agentState is AgentState.Acting -> "Autonomous Execution"
+                        agentState is AgentState.Speaking -> "Responding..."
+                        agentState is AgentState.NeedsConfirmation -> "Action Required"
+                        agentState is AgentState.Error -> "Notice"
+                        else -> "How can I help?"
                     }
 
                     Text(
@@ -137,10 +141,11 @@ fun MainAssistantScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     val subtitleText = when {
-                        spokenText.isNotBlank() -> "\"$spokenText\""
+                        spokenText.isNotBlank() && isListening -> "\"$spokenText\""
                         agentState is AgentState.Acting -> agentState.stepDescription
                         agentState is AgentState.Speaking -> agentState.message
                         agentState is AgentState.Error -> agentState.message
+                        lastResponse.isNotBlank() && agentState is AgentState.Idle -> lastResponse
                         else -> "Tap the microphone or orb to start"
                     }
 
@@ -149,14 +154,14 @@ fun MainAssistantScreen(
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
-                        maxLines = 3,
+                        maxLines = 4,
                         modifier = Modifier.padding(horizontal = 16.dp)
                     )
                 }
 
                 // Audio Waveform Visualizer
                 AnimatedVisibility(
-                    visible = agentState is AgentState.Listening || sttState is SttState.Listening,
+                    visible = isListening,
                     enter = fadeIn(),
                     exit = fadeOut()
                 ) {
@@ -169,9 +174,9 @@ fun MainAssistantScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Quick Suggestion Chips (when Idle)
+                // Quick Suggestion Chips (when Idle and not listening)
                 AnimatedVisibility(
-                    visible = agentState is AgentState.Idle,
+                    visible = agentState is AgentState.Idle && !isListening,
                     enter = fadeIn(),
                     exit = fadeOut()
                 ) {
@@ -203,32 +208,32 @@ fun MainAssistantScreen(
 
                 // Mic Action Button
                 Row(
-                    horizontalArrangement = Arrangement.Center,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if (agentState !is AgentState.Idle) {
+                    // Stop button (visible when busy)
+                    if (isBusy || isListening) {
                         FloatingActionButton(
                             onClick = onStopClick,
                             containerColor = MaterialTheme.colorScheme.errorContainer,
                             contentColor = MaterialTheme.colorScheme.onErrorContainer,
                             shape = CircleShape,
-                            modifier = Modifier
-                                .size(56.dp)
-                                .padding(end = 12.dp)
+                            modifier = Modifier.size(56.dp)
                         ) {
                             Icon(Icons.Default.Stop, contentDescription = "Cancel")
                         }
                     }
 
+                    // Main mic button
                     FloatingActionButton(
                         onClick = onMicClick,
-                        containerColor = if (agentState is AgentState.Listening) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = if (agentState is AgentState.Listening) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimaryContainer,
+                        containerColor = if (isListening) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = if (isListening) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimaryContainer,
                         shape = CircleShape,
                         modifier = Modifier.size(72.dp)
                     ) {
                         Icon(
-                            imageVector = if (agentState is AgentState.Listening) Icons.Default.Mic else Icons.Default.MicOff,
+                            imageVector = if (isListening) Icons.Default.Mic else Icons.Default.MicOff,
                             contentDescription = "Voice Input",
                             modifier = Modifier.size(32.dp)
                         )

@@ -34,8 +34,8 @@ class VoiceStateManager(
     private val _spokenText = MutableStateFlow("")
     val spokenText: StateFlow<String> = _spokenText.asStateFlow()
 
-    private var sttObserveJob: Job? = null
-    private var ttsObserveJob: Job? = null
+    private var processingJob: Job? = null
+    private var didJustSpeak = false
 
     init {
         observeSettings()
@@ -52,8 +52,7 @@ class VoiceStateManager(
     }
 
     private fun observeSttState() {
-        sttObserveJob?.cancel()
-        sttObserveJob = scope.launch {
+        scope.launch {
             sttEngine.state.collectLatest { state ->
                 when (state) {
                     is SttState.Processing -> {
@@ -63,6 +62,7 @@ class VoiceStateManager(
                     }
                     is SttState.Success -> {
                         _spokenText.value = state.text
+                        Log.d(TAG, "STT Success: '${state.text}'")
                         processUserSpeech(state.text)
                     }
                     is SttState.Error -> {
@@ -75,15 +75,26 @@ class VoiceStateManager(
     }
 
     private fun observeTtsState() {
-        ttsObserveJob?.cancel()
-        ttsObserveJob = scope.launch {
+        scope.launch {
             ttsEngine.state.collectLatest { state ->
-                if (state is TtsState.Idle && settingsRepository.settingsState.value.continuousListeningEnabled) {
-                    // Continuous Listening Loop: Auto-restart microphone when TTS finishes speaking
-                    delay(600)
-                    if (agentState.value is AgentState.Speaking) {
-                        startListening()
+                when (state) {
+                    is TtsState.Idle -> {
+                        // When TTS finishes speaking, reset agent to Idle
+                        if (didJustSpeak) {
+                            didJustSpeak = false
+                            autonomousAgent.resetToIdle()
+
+                            // Continuous Listening: auto-restart mic after response
+                            if (settingsRepository.settingsState.value.continuousListeningEnabled) {
+                                delay(500)
+                                startListening()
+                            }
+                        }
                     }
+                    is TtsState.Speaking -> {
+                        didJustSpeak = true
+                    }
+                    else -> {}
                 }
             }
         }
@@ -94,6 +105,8 @@ class VoiceStateManager(
             ttsEngine.stop()
             val currentLanguage = settingsRepository.settingsState.value.voiceLanguage
             _spokenText.value = ""
+            autonomousAgent.setListening()
+            Log.d(TAG, "Starting STT listening with language: ${currentLanguage.code}")
             sttEngine.startListening(currentLanguage.code)
         }
     }
@@ -101,16 +114,24 @@ class VoiceStateManager(
     fun stopListening() {
         scope.launch {
             sttEngine.stopListening()
+            autonomousAgent.resetToIdle()
         }
     }
 
     fun processUserSpeech(userInput: String) {
         if (userInput.isBlank()) return
-        scope.launch {
+
+        // Cancel any previous processing job
+        processingJob?.cancel()
+        processingJob = scope.launch {
             sttEngine.stopListening()
+            Log.d(TAG, "Processing user speech: '$userInput'")
             val response = autonomousAgent.executeTask(userInput)
+            Log.d(TAG, "Agent response: '$response'")
             if (response.isNotBlank()) {
                 ttsEngine.speak(response)
+            } else {
+                autonomousAgent.resetToIdle()
             }
         }
     }
@@ -125,9 +146,11 @@ class VoiceStateManager(
     }
 
     fun cancelAction() {
+        processingJob?.cancel()
         autonomousAgent.cancelTask()
         ttsEngine.stop()
         sttEngine.cancel()
+        _spokenText.value = ""
     }
 
     fun cleanup() {

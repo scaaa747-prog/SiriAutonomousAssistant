@@ -12,8 +12,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Accessibility
-import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -96,7 +96,7 @@ fun OnboardingScreen(
                         )
                     }
                     if (hasMicPermission) {
-                        Icon(Icons.Default.CheckCircle, contentDescription = "Granted", tint = Color(0xFF4CAF50))
+                        Icon(Icons.Default.Done, contentDescription = "Granted", tint = Color(0xFF4CAF50))
                     } else {
                         OutlinedButton(onClick = onRequestMicPermission) {
                             Text("Grant")
@@ -117,7 +117,7 @@ fun OnboardingScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Accessibility,
+                        imageVector = Icons.Default.Check,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary
                     )
@@ -131,7 +131,7 @@ fun OnboardingScreen(
                         )
                     }
                     if (isAccessibilityEnabled) {
-                        Icon(Icons.Default.CheckCircle, contentDescription = "Enabled", tint = Color(0xFF4CAF50))
+                        Icon(Icons.Default.Done, contentDescription = "Enabled", tint = Color(0xFF4CAF50))
                     } else {
                         OutlinedButton(onClick = onOpenAccessibilitySettings) {
                             Text("Enable")

@@ -187,6 +187,14 @@ class AutonomousAgent(
         _agentState.value = AgentState.Idle
     }
 
+    fun resetToIdle() {
+        _agentState.value = AgentState.Idle
+    }
+
+    fun setListening() {
+        _agentState.value = AgentState.Listening
+    }
+
     companion object {
         private const val TAG = "AutonomousAgent"
     }

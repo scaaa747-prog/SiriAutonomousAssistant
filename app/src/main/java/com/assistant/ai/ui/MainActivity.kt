@@ -64,7 +64,9 @@ fun AssistantApp(
 
     val agentState by viewModel.agentState.collectAsState()
     val sttState by viewModel.sttState.collectAsState()
+    val isListening by viewModel.isListening.collectAsState()
     val spokenText by viewModel.spokenText.collectAsState()
+    val lastResponse by viewModel.lastResponse.collectAsState()
     val rmsAmplitude by viewModel.rmsAmplitude.collectAsState()
     val batteryLevel by viewModel.batteryLevel.collectAsState()
     val isAccessibilityEnabled by viewModel.isAccessibilityEnabled.collectAsState()
@@ -93,7 +95,9 @@ fun AssistantApp(
             MainAssistantScreen(
                 agentState = agentState,
                 sttState = sttState,
+                isListening = isListening,
                 spokenText = spokenText,
+                lastResponse = lastResponse,
                 rmsAmplitude = rmsAmplitude,
                 batteryLevel = batteryLevel,
                 isAccessibilityEnabled = isAccessibilityEnabled,

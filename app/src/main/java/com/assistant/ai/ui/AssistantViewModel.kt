@@ -1,6 +1,7 @@
 package com.assistant.ai.ui
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.assistant.ai.accessibility.AssistantAccessibilityService
@@ -75,6 +76,10 @@ class AssistantViewModel(application: Application) : AndroidViewModel(applicatio
     val rmsAmplitude: StateFlow<Float> = voiceStateManager.audioRmsFlow
     val settingsState: StateFlow<SettingsState> = settingsRepository.settingsState
 
+    // Unified UI state that combines agent + stt state for the UI layer
+    private val _isListening = MutableStateFlow(false)
+    val isListening: StateFlow<Boolean> = _isListening.asStateFlow()
+
     val isAccessibilityEnabled: StateFlow<Boolean> = AssistantAccessibilityService.isServiceActive
 
     private val _batteryLevel = MutableStateFlow(systemExecutor.getBatteryLevel())
@@ -83,8 +88,13 @@ class AssistantViewModel(application: Application) : AndroidViewModel(applicatio
     private val _hasMicPermission = MutableStateFlow(permissionManager.hasRecordAudioPermission())
     val hasMicPermission: StateFlow<Boolean> = _hasMicPermission.asStateFlow()
 
+    // Last response from the assistant for display
+    private val _lastResponse = MutableStateFlow("")
+    val lastResponse: StateFlow<String> = _lastResponse.asStateFlow()
+
     init {
         registerTools()
+        observeStates()
     }
 
     private fun registerTools() {
@@ -107,6 +117,25 @@ class AssistantViewModel(application: Application) : AndroidViewModel(applicatio
         toolRegistry.registerTool(PauseMediaTool(systemExecutor))
     }
 
+    private fun observeStates() {
+        // Track listening state from STT engine
+        viewModelScope.launch {
+            sttState.collect { state ->
+                _isListening.value = state is SttState.Listening || state is SttState.Processing
+            }
+        }
+        // Track agent responses for display
+        viewModelScope.launch {
+            agentState.collect { state ->
+                when (state) {
+                    is AgentState.Speaking -> _lastResponse.value = state.message
+                    is AgentState.Error -> _lastResponse.value = state.message
+                    else -> {}
+                }
+            }
+        }
+    }
+
     fun refreshPermissions() {
         _hasMicPermission.value = permissionManager.hasRecordAudioPermission()
         _batteryLevel.value = systemExecutor.getBatteryLevel()
@@ -114,10 +143,35 @@ class AssistantViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun onMicClick() {
         refreshPermissions()
-        if (agentState.value is AgentState.Listening) {
-            voiceStateManager.stopListening()
-        } else {
-            voiceStateManager.startListening()
+        if (!_hasMicPermission.value) {
+            Log.w(TAG, "Microphone permission not granted")
+            return
+        }
+
+        val currentSttState = sttState.value
+        val currentAgentState = agentState.value
+
+        Log.d(TAG, "onMicClick: sttState=$currentSttState, agentState=$currentAgentState")
+
+        when {
+            // If currently listening, stop
+            currentSttState is SttState.Listening || currentSttState is SttState.Processing -> {
+                voiceStateManager.stopListening()
+            }
+            // If agent is busy (thinking/acting/speaking), cancel and start fresh
+            currentAgentState is AgentState.Thinking ||
+            currentAgentState is AgentState.Acting ||
+            currentAgentState is AgentState.Speaking -> {
+                voiceStateManager.cancelAction()
+                viewModelScope.launch {
+                    kotlinx.coroutines.delay(200)
+                    voiceStateManager.startListening()
+                }
+            }
+            // Default: start listening
+            else -> {
+                voiceStateManager.startListening()
+            }
         }
     }
 
@@ -163,5 +217,9 @@ class AssistantViewModel(application: Application) : AndroidViewModel(applicatio
         viewModelScope.launch {
             modelManager.releaseResources()
         }
+    }
+
+    companion object {
+        private const val TAG = "AssistantViewModel"
     }
 }
