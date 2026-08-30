@@ -7,9 +7,13 @@ import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.util.Log
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import java.util.Locale
 
 class AndroidSpeechRecognizerEngine(private val context: Context) : SpeechRecognizerEngine {
@@ -56,7 +60,6 @@ class AndroidSpeechRecognizerEngine(private val context: Context) : SpeechRecogn
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
             putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, context.packageName)
             putExtra("android.speech.extra.PREFER_OFFLINE", true)
-            // Extended timeouts to prevent mic from closing after 1 sec of silence
             putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 6000L)
             putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 6000L)
             putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 3000L)
@@ -136,9 +139,8 @@ class AndroidSpeechRecognizerEngine(private val context: Context) : SpeechRecogn
                 Log.w(TAG, "STT Error ($error): $errorMsg")
 
                 if (isListeningActive && isTimeoutOrNoMatch) {
-                    // Auto-restart listening if timeout occurred while user is still in listening mode
-                    kotlinx.coroutines.MainScope().kotlinx.coroutines.launch {
-                        kotlinx.coroutines.delay(300)
+                    CoroutineScope(Dispatchers.Main).launch {
+                        delay(300)
                         if (isListeningActive) {
                             startListening(lastLanguageLocale)
                         }
@@ -154,8 +156,8 @@ class AndroidSpeechRecognizerEngine(private val context: Context) : SpeechRecogn
                 if (text.isNotBlank()) {
                     _state.value = SttState.Success(text)
                 } else if (isListeningActive) {
-                    kotlinx.coroutines.MainScope().kotlinx.coroutines.launch {
-                        kotlinx.coroutines.delay(300)
+                    CoroutineScope(Dispatchers.Main).launch {
+                        delay(300)
                         if (isListeningActive) {
                             startListening(lastLanguageLocale)
                         }
