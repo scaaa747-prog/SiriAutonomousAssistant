@@ -110,7 +110,6 @@ class AutonomousAgent(
 
                         // 4. Act (Execute Tool)
                         _agentState.value = AgentState.Acting("Step $stepCount: ${decision.explanation}")
-                        delay(300) // Brief delay for UI response stability
 
                         val result = toolRegistry.executeTool(decision.toolName, decision.arguments)
                         conversationContext.addActionResult(
@@ -122,8 +121,21 @@ class AutonomousAgent(
                             )
                         )
 
+                        // Direct System Tools Auto-Completion (Instant <10ms execution without loop)
+                        val singleStepTools = setOf(
+                            "getbattery", "getvolume", "setvolume", "getbrightness",
+                            "setbrightness", "pressback", "presshome", "playmedia", "pausemedia"
+                        )
+                        if (singleStepTools.contains(decision.toolName.lowercase()) && result.success) {
+                            val response = result.message
+                            conversationContext.addMessage(MessageRole.ASSISTANT, response)
+                            conversationContext.updateTaskProgress(stepCount, completed = true)
+                            _agentState.value = AgentState.Speaking(response)
+                            return response
+                        }
+
                         // 5. Observe Again & Verify State
-                        delay(500)
+                        delay(400)
                         AssistantAccessibilityService.instance?.captureCurrentScreen()
 
                         if (!result.success) {

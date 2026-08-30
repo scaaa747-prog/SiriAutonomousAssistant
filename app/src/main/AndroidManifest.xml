@@ -33,6 +33,14 @@
             </intent-filter>
         </activity>
 
+        <!-- Foreground Service for Background Assistant Working -->
+        <service
+            android:name=".android.VoiceAssistantForegroundService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="specialUse"
+            tools:ignore="ForegroundServicePermission" />
+
         <!-- Accessibility Service for Screen Reading and UI Control -->
         <service
             android:name=".accessibility.AssistantAccessibilityService"
