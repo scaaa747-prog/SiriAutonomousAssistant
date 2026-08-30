@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.assistant.ai.ui.MainActivity
 
@@ -20,8 +21,12 @@ class VoiceAssistantForegroundService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val notification = buildNotification()
-        startForeground(NOTIFICATION_ID, notification)
+        try {
+            val notification = buildNotification()
+            startForeground(NOTIFICATION_ID, notification)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to start foreground notification: ${e.message}")
+        }
         return START_STICKY
     }
 
@@ -37,7 +42,7 @@ class VoiceAssistantForegroundService : Service() {
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Siri Autonomous Assistant")
-            .setContentText("Listening and ready in background")
+            .setContentText("Ready in background")
             .setSmallIcon(android.R.drawable.ic_btn_speak_now)
             .setContentIntent(pendingIntent)
             .setOngoing(true)
@@ -54,27 +59,36 @@ class VoiceAssistantForegroundService : Service() {
             ).apply {
                 description = "Keeps Siri Assistant active in background"
             }
-            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            manager.createNotificationChannel(channel)
+            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+            manager?.createNotificationChannel(channel)
         }
     }
 
     companion object {
+        private const val TAG = "VoiceAssistantService"
         private const val CHANNEL_ID = "assistant_foreground_service_channel"
         private const val NOTIFICATION_ID = 1001
 
         fun startService(context: Context) {
-            val intent = Intent(context, VoiceAssistantForegroundService::class.java)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(intent)
-            } else {
-                context.startService(intent)
+            try {
+                val intent = Intent(context, VoiceAssistantForegroundService::class.java)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    context.startForegroundService(intent)
+                } else {
+                    context.startService(intent)
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Could not start foreground service: ${e.message}")
             }
         }
 
         fun stopService(context: Context) {
-            val intent = Intent(context, VoiceAssistantForegroundService::class.java)
-            context.stopService(intent)
+            try {
+                val intent = Intent(context, VoiceAssistantForegroundService::class.java)
+                context.stopService(intent)
+            } catch (e: Exception) {
+                Log.w(TAG, "Could not stop foreground service: ${e.message}")
+            }
         }
     }
 }

@@ -8,12 +8,16 @@ class AssistantApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         instance = this
-        try {
-            com.assistant.ai.android.VoiceAssistantForegroundService.startService(this)
-        } catch (e: Exception) {
-            Log.w(TAG, "Could not start foreground service: ${e.message}")
+        setupUncaughtExceptionHandler()
+        Log.d(TAG, "AssistantApplication initialized successfully.")
+    }
+
+    private fun setupUncaughtExceptionHandler() {
+        val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            Log.e(TAG, "Uncaught exception in thread ${thread.name}", throwable)
+            defaultHandler?.uncaughtException(thread, throwable)
         }
-        Log.d(TAG, "AssistantApplication initialized.")
     }
 
     companion object {
