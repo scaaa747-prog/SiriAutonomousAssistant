@@ -57,7 +57,7 @@ class HeuristicReasoningEngine : LocalReasoningEngine {
         }
 
         // 2. Open Settings or Apps
-        if (query.contains("open settings") || query.contains("go to settings")) {
+        if (query.contains("settings") || query.contains("setting")) {
             val isSettingsOpen = screen?.packageName?.contains("settings", ignoreCase = true) == true
             if (!isSettingsOpen) {
                 val section = when {
